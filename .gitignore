@@ -1,0 +1,4 @@
+# This is a simple repo to create and upload python packages. We ignore build and dist dirs.
+build/
+dist/
+new_template_USERNAME.egg-info
