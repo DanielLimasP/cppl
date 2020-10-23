@@ -1,6 +1,6 @@
 # People counting with OpenCV and Ubidots.
 
-This is the foundation to the AI project.
+This is the foundation for the AI project.
 
 ### Some useful links
 
