@@ -15,6 +15,9 @@ import argparse
 # Token:
 # BBFF-Ugasz1Zb8ov9VlUTuYQMmZKoNQIdW7
 
+# DeviceID:
+# 5f9237844763e70500e8d61b
+
 URL = "http://things.ubidots.com"
 INDUSTRIAL_USER = False
 token = "BBFF-Ugasz1Zb8ov9VlUTuYQMmZKoNQIdW7"
