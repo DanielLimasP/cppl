@@ -1,4 +1,4 @@
-from imutils.object_detection import non_max_supression
+from imutils.object_detection import non_max_suppression
 from base64 import b64encode
 import numpy as np
 import imutils
@@ -15,15 +15,15 @@ import argparse
 # Token:
 # BBFF-Ugasz1Zb8ov9VlUTuYQMmZKoNQIdW7
 
-URL_EDU = "http://things.ubidots.com"
+URL = "http://things.ubidots.com"
 INDUSTRIAL_USER = False
 token = "BBFF-Ugasz1Zb8ov9VlUTuYQMmZKoNQIdW7"
 device = "detector"
 variable = "people"
 
 # HOG = Histogram of oriented gradients
-hogcv = cv2.HOGDescriptor()
-hogcv.setSVMDetector(cv2.HOGDescriptor_getDefaultPeopleDetector())
+HOGCV = cv2.HOGDescriptor()
+HOGCV.setSVMDetector(cv2.HOGDescriptor_getDefaultPeopleDetector())
 
 def detector(image):
     '''
@@ -31,15 +31,18 @@ def detector(image):
     them with funny boxes...
     image is a numpy array
     '''
-    image = imutils.resize(image, width=min(400, image.shape[1]))
+    
+    # Author does not resize image
+    # image = imutils.resize(image, width=min(400, image.shape[1]))
     clone = image.copy()
 
     # Detect multiscale detects people... basically
-    (rects, weights) = hogcv.detectMultiScale(image, winStride=(8,8), padding=(32,32), scale=1.05)
+    # Author uses other parameters
+    (rects, weights) = HOGCV.detectMultiScale(image, winStride=(4,4), padding=(8,8), scale=1.05)
 
     # supress overlapping boxes
     rects = np.array([[x, y, x+w, y+h] for (x, y, w, h) in rects])
-    result = non_max_supression(rects, probs=None, overlapThresh=0.65)
+    result = non_max_suppression(rects, probs=None, overlapThresh=0.65)
 
     return result
 
@@ -62,7 +65,7 @@ def local_detect(image_path):
 
     # Show the results (boxes around people)
     for (xA, yA, xB, yB) in result:
-        cv2.rectangle(image, (xA, yA), (xB, yB), (0, 255, 55))
+        cv2.rectangle(image, (xA, yA), (xB, yB), (0, 255, 0), 2)
 
     cv2.imshow("result", image)
     cv2.waitKey(0)
@@ -155,7 +158,7 @@ def send_to_ubidots(token, device, variable, value, context={}, industrial=False
     This helper functions sends the payload to the server.
     '''
     # Builds the endpoint
-    url = URL_EDU
+    url = URL
     url = "{}/api/v1.6/devices/{}".format(url, device)
 
     payload = build_payload(variable, value, context)
@@ -188,4 +191,4 @@ def argsParser():
 
 if __name__ == "__main__":
     args = argsParser()
-    detect_people()
+    detect_people(args)
