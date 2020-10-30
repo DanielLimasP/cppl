@@ -1,170 +1,64 @@
 from imutils.object_detection import non_max_suppression
-from base64 import b64encode
 import numpy as np
 import imutils
 import cv2
 import requests
 import time
 import argparse
+import time
+import base64
 
-# Main Module
+'''
+Usage:
+python peopleCounter.py -i PATH_TO_IMAGE  # Reads and detect people in a single local stored image
+python peopleCounter.py -c  # Attempts to detect people using webcam
+IMPORTANT: This example is given AS IT IS without any warranty
+Made by: Jose Garcia
+'''
 
-# API Key:
-# BBFF-8ac0db61959c70359eea7879119dccc2e01
+URL_EDUCATIONAL = "http://things.ubidots.com"
+URL_INDUSTRIAL = "http://industrial.api.ubidots.com"
+INDUSTRIAL_USER = True  # Set this to False if you are an educational user
+TOKEN = "...."  # Put here your Ubidots TOKEN
+DEVICE = "detector"  # Device where will be stored the result
+VARIABLE = "people"  # Variable where will be stored the result
 
-# Token:
-# BBFF-Ugasz1Zb8ov9VlUTuYQMmZKoNQIdW7
-
-# DeviceID:
-# 5f9237844763e70500e8d61b
-
-URL = "http://things.ubidots.com"
-INDUSTRIAL_USER = False
-token = "BBFF-Ugasz1Zb8ov9VlUTuYQMmZKoNQIdW7"
-device = "detector"
-variable = "people"
-
-# HOG = Histogram of oriented gradients
+# Opencv pre-trained SVM with HOG people features 
 HOGCV = cv2.HOGDescriptor()
 HOGCV.setSVMDetector(cv2.HOGDescriptor_getDefaultPeopleDetector())
 
 def detector(image):
     '''
-    Basically detects people and marks
-    them with funny boxes...
-    image is a numpy array
+    @image is a numpy array
     '''
-    
-    # Author does not resize image
-    # image = imutils.resize(image, width=min(400, image.shape[1]))
+
     clone = image.copy()
 
-    # Detect multiscale detects people... basically
-    # Author uses other parameters
-    (rects, weights) = HOGCV.detectMultiScale(image, winStride=(4,4), padding=(8,8), scale=1.05)
+    (rects, weights) = HOGCV.detectMultiScale(image, winStride=(4, 4),
+                                              padding=(8, 8), scale=1.05)
 
-    # supress overlapping boxes
-    rects = np.array([[x, y, x+w, y+h] for (x, y, w, h) in rects])
+    # draw the original bounding boxes
+    for (x, y, w, h) in rects:
+        cv2.rectangle(clone, (x, y), (x + w, y + h), (0, 0, 255), 2)
+
+    # Applies non-max supression from imutils package to kick-off overlapped
+    # boxes
+    rects = np.array([[x, y, x + w, y + h] for (x, y, w, h) in rects])
     result = non_max_suppression(rects, probs=None, overlapThresh=0.65)
 
     return result
 
-def local_detect(image_path):
-    '''
-    It takes a local image path as
-    an argument an returns the same
-    image but with people marked 
-    inside funny boxes.
-    '''
 
-    result = []
-    image = cv2.imread(image_path)
-    if len(image) <= 0:
-        print("[ERROR] could not read your local image")
-        return result
+def buildPayload(variable, value, context):
+    return {variable: {"value": value, "context": context}}
 
-    print("[INFO] Detecting people")
-    result = detector(image)
 
-    # Show the results (boxes around people)
-    for (xA, yA, xB, yB) in result:
-        cv2.rectangle(image, (xA, yA), (xB, yB), (0, 255, 0), 2)
-
-    cv2.imshow("result", image)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
-
-    return (result, image)
-
-def camera_detect(token, device, variable, sample_time=5):
-    '''
-    This function is pretty self explanatory. We capture
-    each frame with the camera, we detect wheter or not
-    there are people in frame. Additionally we send every
-    frame to ubidots.
-    '''
-    cap =cv2.VideoCapture(0)
-    init = time.time()
-
-    if sample_time < 1:
-        sample_time = 1
-
-    while(True):
-        # This basically captures frame by frame
-        ret, frame = cap.read()
-        frame = imutils.resize(frame, width=min(400, frame.shape[1]))
-        result = detector(frame.copy())
-
-        # This shows the result
-        for (xA, yA, xB, yB) in result:
-            cv2.rectangle(frame, (xA, yA), (xB, yB), (0, 255, 55))
-        cv2.imshow('frame', frame)
-
-        # Send them results
-        if time.time( - init >= sample_time):
-            print("[INFO] Sending frame results")
-            # We have to convert image to base64
-            b64_img = convert_to_base64(frame)
-            context = {"image": b64_img}
-            send_to_ubidots(token, device, variable, len(result, context=context))
-            init = time.time()
-
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
-
-    cap.release()
-    cv2.destroyAllWindows()
-
-def convert_to_base64(image):
-    '''
-    Helper function to convert images to base64
-    to send them across the web.
-    '''
-    image = imutils.resize(image, width=400)
-    img_str = cv2.imencode('.png', image)[1].tostring()
-    b64 = b64encode(img_str)
-    return b64.decode('utf-8')
-
-def detect_people(args):
-    '''
-    Main function. Not much else to say.
-    '''
-    image_path = args["image"]
-    camera = True if str(args["camera"]) == 'true' else False
-
-    if image_path != None and not camera:
-        print("[INFO] Image path provided, attempting to read image")
-        (result, image) = local_detect(image_path)
-        print("[INFO] Sending results")
-        b64 = convert_to_base64(image)
-        context = {"image": b64}
-
-        # Send the image result
-        req = send_to_ubidots(token, device, variable, len(result), context=context)
-        if req.status_code >= 400:
-            print("[ERROR] Could not send data to the server")
-            return req
-        
-        if camera: 
-            print("[INFO] Reading camera images")
-            camera_detect(token, device, variable)
-
-def build_payload(variable, value, context):
-    '''
-    This helper function build the payload to be sent
-    to the server.
-    '''
-    return {variable: {"value": value, "Content-Type": "application/json"}}
-
-def send_to_ubidots(token, device, variable, value, context={}, industrial=False):
-    '''
-    This helper functions sends the payload to the server.
-    '''
+def sendToUbidots(token, device, variable, value, context={}, industrial=True):
     # Builds the endpoint
-    url = URL
+    url = URL_INDUSTRIAL if industrial else URL_EDUCATIONAL
     url = "{}/api/v1.6/devices/{}".format(url, device)
 
-    payload = build_payload(variable, value, context)
+    payload = buildPayload(variable, value, context)
     headers = {"X-Auth-Token": token, "Content-Type": "application/json"}
 
     attempts = 0
@@ -172,26 +66,114 @@ def send_to_ubidots(token, device, variable, value, context={}, industrial=False
 
     while status >= 400 and attempts <= 5:
         req = requests.post(url=url, headers=headers, json=payload)
-        status =req.status_code
+        status = req.status_code
         attempts += 1
         time.sleep(1)
 
     return req
 
+
 def argsParser():
-    '''
-    This little function is really useful and may see more 
-    implementations in the future.
-    '''
     ap = argparse.ArgumentParser()
     ap.add_argument("-i", "--image", default=None,
-        help="path to image test file directory")
+                    help="path to image test file directory")
     ap.add_argument("-c", "--camera", default=False,
-        help="Set as true if you wish to use the camera")
+                    help="Set as true if you wish to use the camera")
     args = vars(ap.parse_args())
 
     return args
 
-if __name__ == "__main__":
+
+def localDetect(image_path):
+    result = []
+    image = cv2.imread(image_path)
+    image = imutils.resize(image, width=min(400, image.shape[1]))
+    clone = image.copy()
+    if len(image) <= 0:
+        print("[ERROR] could not read your local image")
+        return result
+    print("[INFO] Detecting people")
+    result = detector(image)
+
+    # shows the result
+    for (xA, yA, xB, yB) in result:
+        cv2.rectangle(image, (xA, yA), (xB, yB), (0, 255, 0), 2)
+
+    cv2.imshow("result", image)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+
+    cv2.imwrite("result.png", np.hstack((clone, image)))
+    return (result, image)
+
+
+def cameraDetect(token, device, variable, sample_time=5):
+
+    cap = cv2.VideoCapture(0)
+    init = time.time()
+
+    # Allowed sample time for Ubidots is 1 dot/second
+    if sample_time < 1:
+        sample_time = 1
+
+    while(True):
+        # Capture frame-by-frame
+        ret, frame = cap.read()
+        frame = imutils.resize(frame, width=min(400, frame.shape[1]))
+        result = detector(frame.copy())
+
+        # shows the result
+        for (xA, yA, xB, yB) in result:
+            cv2.rectangle(frame, (xA, yA), (xB, yB), (0, 255, 0), 2)
+        cv2.imshow('frame', frame)
+
+        
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+
+    # When everything done, release the capture
+    cap.release()
+    cv2.destroyAllWindows()
+
+
+def convert_to_base64(image):
+    image = imutils.resize(image, width=400)
+    img_str = cv2.imencode('.png', image)[1].tostring()
+    b64 = base64.b64encode(img_str)
+
+    return b64.decode('utf-8')
+
+
+def detectPeople(args):
+    image_path = args["image"]
+    camera = True if str(args["camera"]) == 'true' else False
+
+    # Routine to read local image
+    if image_path != None and not camera:
+        print("[INFO] Image path provided, attempting to read image")
+        (result, image) = localDetect(image_path)
+        print("[INFO] sending results")
+        # Converts the image to base 64 and adds it to the context
+        b64 = convert_to_base64(image)
+        context = {"image": b64}
+
+        # Sends the result
+        req = sendToUbidots(TOKEN, DEVICE, VARIABLE,
+                            len(result), context=context)
+        if req.status_code >= 400:
+            print("[ERROR] Could not send data to Ubidots")
+            return req
+
+    # Routine to read images from webcam
+    if camera:
+        print("[INFO] reading camera images")
+        cameraDetect(TOKEN, DEVICE, VARIABLE)
+
+
+def main():
     args = argsParser()
-    detect_people(args)
+    detectPeople(args)
+
+
+if __name__ == '__main__':
+    main()
