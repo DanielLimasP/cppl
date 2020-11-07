@@ -12,14 +12,11 @@ import base64
 Usage:
 python peopleCounter.py -i PATH_TO_IMAGE  # Reads and detect people in a single local stored image
 python peopleCounter.py -c  # Attempts to detect people using webcam
-IMPORTANT: This example is given AS IT IS without any warranty
-Made by: Jose Garcia
 '''
 
 URL_EDUCATIONAL = "http://things.ubidots.com"
-URL_INDUSTRIAL = "http://industrial.api.ubidots.com"
-INDUSTRIAL_USER = True  # Set this to False if you are an educational user
-TOKEN = "...."  # Put here your Ubidots TOKEN
+INDUSTRIAL_USER = False  # Set this to False if you are an educational user
+TOKEN = "BBFF-Ugasz1Zb8ov9VlUTuYQMmZKoNQIdW7"  # Put here your Ubidots TOKEN
 DEVICE = "detector"  # Device where will be stored the result
 VARIABLE = "people"  # Variable where will be stored the result
 
@@ -29,7 +26,9 @@ HOGCV.setSVMDetector(cv2.HOGDescriptor_getDefaultPeopleDetector())
 
 def detector(image):
     '''
-    @image is a numpy array
+    Basically detects people and marks
+    them with funny boxes...
+    image is a numpy array
     '''
 
     clone = image.copy()
@@ -50,12 +49,16 @@ def detector(image):
 
 
 def buildPayload(variable, value, context):
+    '''
+    This helper function build the payload to be sent
+    to the server.
+    '''
     return {variable: {"value": value, "context": context}}
 
 
-def sendToUbidots(token, device, variable, value, context={}, industrial=True):
+def sendToUbidots(token, device, variable, value, context={}, industrial=False):
     # Builds the endpoint
-    url = URL_INDUSTRIAL if industrial else URL_EDUCATIONAL
+    url = URL_EDUCATIONAL
     url = "{}/api/v1.6/devices/{}".format(url, device)
 
     payload = buildPayload(variable, value, context)
@@ -74,6 +77,10 @@ def sendToUbidots(token, device, variable, value, context={}, industrial=True):
 
 
 def argsParser():
+    '''
+    This little function is really useful and may see more 
+    implementations in the future.
+    '''
     ap = argparse.ArgumentParser()
     ap.add_argument("-i", "--image", default=None,
                     help="path to image test file directory")
@@ -85,6 +92,13 @@ def argsParser():
 
 
 def localDetect(image_path):
+    '''
+    It takes a local image path as
+    an argument an returns the same
+    image but with people marked 
+    inside funny boxes.
+    '''
+
     result = []
     image = cv2.imread(image_path)
     image = imutils.resize(image, width=min(400, image.shape[1]))
@@ -108,7 +122,11 @@ def localDetect(image_path):
 
 
 def cameraDetect(token, device, variable, sample_time=5):
-
+    '''
+    This function is really self explanatory. However, note
+    that it takes the token, the device and the variable
+    as parameters to send the images to the server.
+    '''
     cap = cv2.VideoCapture(0)
     init = time.time()
 
@@ -137,6 +155,10 @@ def cameraDetect(token, device, variable, sample_time=5):
 
 
 def convert_to_base64(image):
+    '''
+    Helper function to convert images to base64
+    to send them across the web.
+    '''
     image = imutils.resize(image, width=400)
     img_str = cv2.imencode('.png', image)[1].tostring()
     b64 = base64.b64encode(img_str)
@@ -145,6 +167,9 @@ def convert_to_base64(image):
 
 
 def detectPeople(args):
+    '''
+    Main function. Not much else to say.
+    '''
     image_path = args["image"]
     camera = True if str(args["camera"]) == 'true' else False
 

@@ -1,19 +1,21 @@
-const User = require('../models/User')
+const User = require('../models/Auth')
 const jwt = require('jsonwebtoken')
-
-async function newPin(req, res){
-
-}
 
 async function signIn(req, res){
 
 }
 
-function logOut(req, res){
+async function newPin(req, res){
+
+}
+
+function logout(req, res){
 
 }
 
 
 module.exports = {
-
+    signIn,
+    newPin,
+    logout
 }

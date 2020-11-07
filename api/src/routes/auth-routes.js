@@ -1,6 +1,6 @@
 let router = require('express').Router()
 
-let userController = require('../controllers/user-controller')
+let userController = require('../controllers/auth-controller')
 
 router.post('/signin', userController.signIn)
 router.post('/new-pin', userController.signUp)
