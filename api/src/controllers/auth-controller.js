@@ -1,7 +1,7 @@
 const Auth = require('../models/Auth')
 const jwt = require('jsonwebtoken')
 
-// Special hash to signup new stores 
+// Special hash 
 // 06d80eb0c50b49a509b49f2424e8c805 = dog
 
 JWT_SECRET = "supersecretsecret"
@@ -9,16 +9,17 @@ JWT_SECRET = "supersecretsecret"
 async function signup(req, res){
     console.log('Body of the signup request:')
     console.log(req.body) 
-    const { storeName, pin, storeCapacity, hash } = req.body
+    const { storeName, pin, storeCapacity, peopleInside, hash } = req.body
     const authPin = await Auth.findOne({pin})
     const authName = await Auth.findOne({storeName})
+    const timestamp = Date.now()
     if(hash == "06d80eb0c50b49a509b49f2424e8c805"){
         if(authPin || authName){
             console.log(authPin)
             console.log({msg: "Name or pin already in use"})
             return res.status(403).send({msg: 'Name or pin already in use'})
         }else{
-            const newAuth = new Auth({storeName, pin, storeCapacity})
+            const newAuth = new Auth({storeName, pin, storeCapacity, peopleInside, timestamp})
             await newAuth.save()
             console.log({msg: `The store ${newAuth.storeName} has been created`})
             return res.status(201).send({msg: `The store ${newAuth.storeName} has been created`})
@@ -35,7 +36,7 @@ async function signin(req, res){
     let auth = await Auth.findOne({pin: pin})
     if(auth){
         console.log(auth)  
-        let token = jwt.sign({pin}, JWT_SECRET, {expiresIn: 864000})
+        let token = jwt.sign({pin}, JWT_SECRET, {expiresIn: 86400})
         console.log({auth: true, message: 'Pin authenticated', authToken: token})
         return res.status(200).send({auth: true, message: 'Pin authenticated', authToken: token})
     }else{
@@ -62,6 +63,16 @@ async function newPin(req, res){
         }
     }else{
         return res.status(401).send({msg: "Unauthorized"})
+    }
+}
+
+async function getStore(req, res){
+    let { pin, hash } = req.query
+    let store = await Auth.findOne({pin})
+    if (hash == "06d80eb0c50b49a509b49f2424e8c805" && store){
+        return res.status(200).send({msg: "Store", store: store})
+    }else{
+        return res.status(403).send({msg: "Unauthorized"})
     }
 }
 
@@ -99,5 +110,6 @@ module.exports = {
     signin,
     signup,
     newPin,
+    getStore,
     logout
 }

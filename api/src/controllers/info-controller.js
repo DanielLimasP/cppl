@@ -13,30 +13,43 @@ async function addInfo(req, res){
     console.log(req.body)
     let { 
         peopleEntering,
-        peopleInside,
         storePin,
         hash
     } = req.body
 
-    let validStore = await Auth.findOne({pin: storePin})
+    let store = await Auth.findOne({pin: storePin})
     const timestamp = Date.now()
-    console.log(validStore)
-    if(hash == "06d80eb0c50b49a509b49f2424e8c805" && validStore){
-         const newInfo = new Info({peopleEntering, peopleInside, storePin, timestamp})
-         await newInfo.save()
-         return res.status(201).send({msg: "Info added", info: newInfo})
+    
+    if(hash == "06d80eb0c50b49a509b49f2424e8c805" && store){
+        const oldPeopleInside = store.peopleInside
+        let peopleInside = oldPeopleInside + peopleEntering
+        const query = {pin: storePin}
+
+        await Auth.findOneAndUpdate(query, {peopleInside, timestamp})
+        const newInfo = new Info({peopleEntering, peopleInside, storePin, timestamp})
+        await newInfo.save()
+        return res.status(201).send({msg: "Info added", info: newInfo})
     }else{
         return res.status(403).send({msg: "Unauthorized"})
     }
 }
 
 async function getInfo(req, res){
-    console.log("Body of the getInfo request")
-    console.log(req.body)
-
-
+    console.log("Query params of the getInfo request")
+    console.log(req.query)
+    let { pin, hash } = req.query
+    let store = await Auth.findOne({pin})
+    
+    if(hash == "06d80eb0c50b49a509b49f2424e8c805" && store){
+        const storeInfo = await Info.find({storePin: pin}).sort('timestamp')
+        console.log({msg: "Info", info: storeInfo})
+        return res.status(200).send({msg: "Info", info: storeInfo})
+    }else{
+        return res.status(403).send({msg: "Unauthorized"})
+    }
 }
 
 module.exports = {
-    addInfo
+    addInfo,
+    getInfo
 }
