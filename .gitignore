@@ -3,6 +3,8 @@ build/
 dist/
 new_template_USERNAME.egg-info
 
+.vscode/
+
 # Logs
 logs
 *.log
