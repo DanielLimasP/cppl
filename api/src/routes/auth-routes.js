@@ -1,5 +1,4 @@
 let router = require('express').Router()
-
 let authController = require('../controllers/auth-controller')
 
 router.post('/signin', authController.signin)

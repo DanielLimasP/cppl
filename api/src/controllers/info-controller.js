@@ -1,4 +1,5 @@
 const Info = require('../models/Info')
+const Auth = require('../models/Auth')
 const jwt = require('jsonwebtoken')
 const vt = require('../middleware/verify-token')
 
@@ -16,9 +17,18 @@ async function addInfo(req, res){
         hash
     } = req.body
 
-    if(hash == "06d80eb0c50b49a509b49f2424e8c805")){
-        // Do something
+    let validStore = await Auth.findOne({storeName: store})
+    const timestamp = Date.now()
+    console.log(validStore)
+    if(hash == "06d80eb0c50b49a509b49f2424e8c805" && validStore){
+         const newInfo = new Info({peopleEntering, peopleInside, store, timestamp})
+         await newInfo.save()
+         return res.status(201).send({msg: "Info added", info: newInfo})
+    }else{
+        return res.status(403).send({msg: "Unauthorized"})
     }
+}
 
-    return 
+module.exports = {
+    addInfo
 }

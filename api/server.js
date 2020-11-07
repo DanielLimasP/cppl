@@ -14,6 +14,8 @@ app.use(bodyParser.json())
 // Routes
 const auth = require('./src/routes/auth-routes')
 app.use('/auth', auth)
+const info = require('./src/routes/info-routes')
+app.use('/info', info)
 
 module.exports = app
 
