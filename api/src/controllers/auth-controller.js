@@ -9,7 +9,7 @@ JWT_SECRET = "supersecretsecret"
 async function signup(req, res){
     console.log('Body of the signup request:')
     console.log(req.body) 
-    const { username, pin, hash } = req.body
+    const { username, pin, storeCapacity, hash } = req.body
     const authPin = await Auth.findOne({pin})
     const authName = await Auth.findOne({username})
     if(hash == "06d80eb0c50b49a509b49f2424e8c805"){
@@ -18,7 +18,7 @@ async function signup(req, res){
             console.log({msg: "Username or pin already in use"})
             return res.status(403).send({msg: 'Username or pin already in use'})
         }else{
-            const newAuth = new Auth({username, pin})
+            const newAuth = new Auth({username, pin, storeCapacity})
             await newAuth.save()
             console.log({msg: `The user ${newAuth.username} has been created`})
             return res.status(201).send({msg: `The user ${newAuth.username} has been created`})
