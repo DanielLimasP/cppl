@@ -1,7 +1,7 @@
 const Auth = require('../models/Auth')
 const jwt = require('jsonwebtoken')
 
-// Special hash to signup new users 
+// Special hash to signup new stores 
 // 06d80eb0c50b49a509b49f2424e8c805 = dog
 
 JWT_SECRET = "supersecretsecret"
@@ -9,19 +9,19 @@ JWT_SECRET = "supersecretsecret"
 async function signup(req, res){
     console.log('Body of the signup request:')
     console.log(req.body) 
-    const { username, pin, storeCapacity, hash } = req.body
+    const { storeName, pin, storeCapacity, hash } = req.body
     const authPin = await Auth.findOne({pin})
-    const authName = await Auth.findOne({username})
+    const authName = await Auth.findOne({storeName})
     if(hash == "06d80eb0c50b49a509b49f2424e8c805"){
         if(authPin || authName){
             console.log(authPin)
-            console.log({msg: "Username or pin already in use"})
-            return res.status(403).send({msg: 'Username or pin already in use'})
+            console.log({msg: "Name or pin already in use"})
+            return res.status(403).send({msg: 'Name or pin already in use'})
         }else{
-            const newAuth = new Auth({username, pin, storeCapacity})
+            const newAuth = new Auth({storeName, pin, storeCapacity})
             await newAuth.save()
-            console.log({msg: `The user ${newAuth.username} has been created`})
-            return res.status(201).send({msg: `The user ${newAuth.username} has been created`})
+            console.log({msg: `The store ${newAuth.storeName} has been created`})
+            return res.status(201).send({msg: `The store ${newAuth.storeName} has been created`})
         }
     }else{
         return res.status(400).send({msg: "Unauthorized"})
@@ -58,7 +58,7 @@ async function newPin(req, res){
             await Auth.findOneAndUpdate(query, {pin: newPin})
             return res.status(200).send({msg: "The pin has been changed"})
         }else{
-            return res.status(400).send({msg: "The user corresponding to the pin doesn't exist"})
+            return res.status(400).send({msg: "The store corresponding to the pin doesn't exist"})
         }
     }else{
         return res.status(401).send({msg: "Unauthorized"})
