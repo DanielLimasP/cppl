@@ -1,6 +1,6 @@
 // Mongodb connection file
 const mongoose = require('mongoose')
-const url = 'mongodb://localhost/ai-server-db'
+const url = 'mongodb://localhost/aidb'
 
 mongoose.connect(url, {
     useCreateIndex: true,
