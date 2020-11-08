@@ -28,6 +28,42 @@ def req_test_post():
     else:
         print("Failure")
 
+def signin(pin):
+    url = "http://localhost:4000/auth/signin"
+    res = reqs.post(url, json={"pin": pin})
+    if res:
+        return res.json()
+    else:
+        return "Failure"
+
+
+def add_info(people_entering, store_pin):
+    auth = signin(store_pin)
+    url = "http://localhost:4000/info/"
+    res = reqs.post(url, json={"peopleEntering": people_entering, "storePin": store_pin}, headers={"x-access-token": auth["authToken"]})
+    if res:
+        return res.json()
+    else:
+        return "Failure"
+
+def get_info(pin):
+    auth = signin(pin)
+    url = "http://localhost:4000/info/"
+    params = {"pin": pin}
+    res = reqs.get(url, params, headers={"x-access-token": auth["authToken"]})
+    if res:
+        return res.json()
+    else:
+        return "Failure"
+
 if __name__ == "__main__":
-    #req_test_get()
-    req_test_post()
+    print(signin("5431"))
+    print(add_info(1, "5431"))
+    for obj in get_info("5431")["info"]:
+        print("""
+            People entering: {}
+            People inside: {}
+            Store pin: {}
+            Timestamp: {}        
+        """.format(obj["peopleEntering"], obj["peopleInside"], obj["storePin"], obj["timestamp"],))
+        
