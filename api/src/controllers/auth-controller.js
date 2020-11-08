@@ -67,9 +67,11 @@ async function newPin(req, res){
 }
 
 async function getStore(req, res){
-    let { pin, hash } = req.query
+    let token = req.headers['x-access-token']
+    let valid = await verifyToken(token)
+    let { pin } = req.query
     let store = await Auth.findOne({pin})
-    if (hash == "06d80eb0c50b49a509b49f2424e8c805" && store){
+    if (valid && store){
         return res.status(200).send({msg: "Store", store: store})
     }else{
         return res.status(403).send({msg: "Unauthorized"})
@@ -77,8 +79,10 @@ async function getStore(req, res){
 }
 
 // Logout only works on the side of the client
-function logout(req, res){
-    if(verifyToken){
+async function logout(req, res){
+    let token = req.headers['x-access-token']
+    let valid = await verifyToken(token)
+    if(valid){
         return res.status(200).send({msg: "Successful logoff", token: "", auth: false})
     }else{
         return res.status(401).send({msg: "Unauthorized. You must login to logoff"})
