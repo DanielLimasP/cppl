@@ -66,4 +66,3 @@ if __name__ == "__main__":
             Store pin: {}
             Timestamp: {}        
         """.format(obj["peopleEntering"], obj["peopleInside"], obj["storePin"], obj["timestamp"],))
-        
