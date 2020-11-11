@@ -12,8 +12,8 @@ import auth
 
 '''
 Usage:
-python peopleCounter.py -i PATH_TO_IMAGE  # Reads and detect people in a single local stored image
-python peopleCounter.py -c  # Attempts to detect people using webcam
+python src/main.py -i PATH_TO_IMAGE     # Reads and detect people in a single local stored image
+python src/main.py -c                   # Attempts to detect people using webcam
 '''
 
 # Pin already stored in the database pertaining to the Alsuper Robinson store
