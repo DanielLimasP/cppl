@@ -1,4 +1,4 @@
-# People counting with OpenCV and Ubidots.
+# People counting with OpenCV.
 
 This is the foundation for the AI project.
 
