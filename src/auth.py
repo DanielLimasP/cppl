@@ -1,5 +1,7 @@
 import requests as reqs
 
+# Use local if local. Otherwise, use ngrok.
+local = "http://localhost:4000"
 ngrok = "https://83eb36bc36dd.ngrok.io"
 
 # Dumb is he whom makes tests without asserting
