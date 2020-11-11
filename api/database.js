@@ -8,5 +8,5 @@ mongoose.connect(atlas, {
     useNewUrlParser: true,
     useFindAndModify: false,
     useUnifiedTopology: true
-}).then(db => console.log('Connection established', db))
+}).then(db => console.log('Connection to Atlas established'))
 .catch(err => console.log(err))
