@@ -1,8 +1,10 @@
 import requests as reqs
 
+ngrok = "https://83eb36bc36dd.ngrok.io"
+
 # Dumb is he whom makes tests without asserting
 def signin(pin):
-    url = "http://localhost:4000/auth/signin"
+    url = ngrok + "/auth/signin"
     res = reqs.post(url, json={"pin": pin})
     if res:
         return res.json()
@@ -11,7 +13,7 @@ def signin(pin):
 
 
 def add_info(people_entering, store_pin, token):
-    url = "http://localhost:4000/info/"
+    url = ngrok + "/info/"
     res = reqs.post(url, json={"peopleEntering": people_entering, "storePin": store_pin}, headers={"x-access-token": token})
     if res:
         return res.json()
@@ -20,7 +22,7 @@ def add_info(people_entering, store_pin, token):
 
 def get_info(pin):
     auth = signin(pin)
-    url = "http://localhost:4000/info/"
+    url = ngrok + "/info/"
     params = {"pin": pin}
     res = reqs.get(url, params, headers={"x-access-token": auth["authToken"]})
     if res:
