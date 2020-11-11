@@ -39,6 +39,14 @@ npm run dev
 
 ## Usage
 
+To use the main module, simply do this:
+
+```bash
+cd cppl
+python src/main.py -i PATH_TO_IMAGE   
+python src/main.py -c true 
+```
+
 Consume the API using Postman or Arc
 
 ### Auth routes
