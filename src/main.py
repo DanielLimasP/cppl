@@ -16,6 +16,12 @@ python src/main.py -i PATH_TO_IMAGE     # Reads and detect people in a single lo
 python src/main.py -c                   # Attempts to detect people using webcam
 '''
 
+# ANSI COLORS:
+RED = "\033[0;31m"
+GREEN = "\033[0;32m"
+CYAN = "\033[0;36m"
+LIGHT_GRAY = "\033[0;37m"
+
 # Pin already stored in the database pertaining to the Alsuper Robinson store
 STORE_PIN = "5431"
 
@@ -59,16 +65,16 @@ def detect_people(args, token):
     camera = True if str(args["camera"]) == 'true' else False
 
     # Routine to read local image
-    if image_path != None and not camera:
-        print("[INFO] Image path provided, attempting to read image")
+    if image_path != None and not camera: 
+        print(GREEN + "[INFO]" + LIGHT_GRAY + " Image path provided, attempting to read image")
         (result, image) = local_detect(image_path)
-        print("[INFO] sending results")
+        print(GREEN + "[INFO]" + LIGHT_GRAY + " sending results")
         
         # Sends the result to the server
         PEOPLE_ENTERING = len(result)
         res = auth.add_info(PEOPLE_ENTERING, STORE_PIN, token)
     
-        if res != "Can't add info":
+        if res != RED + "Can't add info" + LIGHT_GRAY:
             print("""
                 People entering: {}
                 People inside: {}
@@ -81,7 +87,7 @@ def detect_people(args, token):
 
     # Routine to read images from webcam
     if camera:
-        print("[INFO] reading camera images")
+        print(CYAN + "[INFO]" + LIGHT_GRAY + " reading camera images")
         camera_detect()
 
 
@@ -98,9 +104,9 @@ def local_detect(image_path):
     image = imutils.resize(image, width=min(400, image.shape[1]))
     clone = image.copy()
     if len(image) <= 0:
-        print("[ERROR] could not read your local image")
+        print(RED + "[ERROR]" + LIGHT_GRAY + " could not read your local image")
         return result
-    print("[INFO] Detecting people")
+    print(GREEN + "[INFO]" + LIGHT_GRAY + " Detecting people")
     result = detector(image)
 
     # shows the result
