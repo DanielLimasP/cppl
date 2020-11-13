@@ -74,8 +74,10 @@ def detect_people(args, token):
         PEOPLE_ENTERING = len(result)
         res = auth.add_info(PEOPLE_ENTERING, STORE_PIN, token)
     
-        if res != RED + "Can't add info" + LIGHT_GRAY:
-            print("""
+        if res != "Can't add info":
+            print()
+            print(CYAN + "Info added to the DB succesfully!" + LIGHT_GRAY)
+            print(LIGHT_GRAY + """
                 People entering: {}
                 People inside: {}
                 Timestamp: {}
