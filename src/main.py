@@ -1,6 +1,7 @@
 from imutils.object_detection import non_max_suppression
 import numpy as np
 import imutils
+import os
 import cv2
 import requests
 import time
@@ -9,6 +10,8 @@ import time
 import base64
 # Our module to make requests to the server
 import auth 
+
+
 
 '''
 Usage:
@@ -28,6 +31,10 @@ STORE_PIN = "5431"
 # Opencv pre-trained SVM with HOG people features 
 HOGCV = cv2.HOGDescriptor()
 HOGCV.setSVMDetector(cv2.HOGDescriptor_getDefaultPeopleDetector())
+
+# OpenCV pretrained face detection HAAR features
+cascPath=os.path.dirname(cv2.__file__)+"/data/haarcascade_frontalface_default.xml"
+faceCascade = cv2.CascadeClassifier(cascPath)
 
 def detector(image):
     '''
@@ -63,6 +70,8 @@ def detect_people(args, token):
     '''
     image_path = args["image"]
     camera = True if str(args["camera"]) == 'true' else False
+    face = True if str(args["face"]) == 'true' else False
+    EXIT = True if str(args["exit"]) == 'true' else False
 
     # Routine to read local image
     if image_path != None and not camera: 
@@ -71,7 +80,11 @@ def detect_people(args, token):
         print(GREEN + "[INFO]" + LIGHT_GRAY + " sending results")
         
         # Sends the result to the server
-        PEOPLE_ENTERING = len(result)
+        if EXIT:
+            PEOPLE_ENTERING = -1 * len(result)
+        else:
+            PEOPLE_ENTERING = len(result)
+            
         res = auth.add_info(PEOPLE_ENTERING, STORE_PIN, token)
     
         if res != "Can't add info":
@@ -89,8 +102,12 @@ def detect_people(args, token):
 
     # Routine to read images from webcam
     if camera:
-        print(CYAN + "[INFO]" + LIGHT_GRAY + " reading camera images")
-        camera_detect()
+        print(GREEN + "[INFO]" + LIGHT_GRAY + " Reading camera images. Detecting bodies")
+        camera_body_detect(token, EXIT)
+    
+    if face:
+        print(GREEN + "[INFO]" + LIGHT_GRAY + " Reading camera images. Detecting faces.")
+        camera_face_detect(token, EXIT)
 
 
 def local_detect(image_path):
@@ -123,7 +140,7 @@ def local_detect(image_path):
     return (result, image)
 
 
-def camera_detect():
+def camera_body_detect(token, exit_camera):
     '''
     This function is really self explanatory.
     '''
@@ -136,15 +153,100 @@ def camera_detect():
         frame = imutils.resize(frame, width=min(400, frame.shape[1]))
         result = detector(frame.copy())
 
-        # shows the result
+        # Say, if we detect a person, send results to the server
+        # halt the execution of the program 10 seconds and then 
+        # continue...
+
+        if exit_camera:
+            PEOPLE_ENTERING = -1 * len(result)
+        else:
+            PEOPLE_ENTERING = len(result) 
+        
+        if PEOPLE_ENTERING > 0:
+            print(GREEN + "Person detected!" + LIGHT_GRAY)
+            time.sleep(5)
+            res = auth.add_info(PEOPLE_ENTERING, STORE_PIN, token)
+           
+            cv2.imwrite("body_detected.png", frame)
+        
+            if res != "Can't add info":
+                print()
+                print(CYAN + "Info added to the DB succesfully!" + LIGHT_GRAY)
+                print(LIGHT_GRAY + """
+                    People entering: {}
+                    People inside: {}
+                    Timestamp: {}
+                """.format(res["info"]["peopleEntering"], res["info"]["peopleInside"], res["info"]["timestamp"])) 
+            else:
+                print(res)
+
+        # Draw a rectangle around the faces
         for (xA, yA, xB, yB) in result:
             cv2.rectangle(frame, (xA, yA), (xB, yB), (0, 255, 0), 2)
+        # Show the resulting frame
         cv2.imshow('frame', frame)
         
+        print(GREEN + "You can now enter the store!" + LIGHT_GRAY)
+
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
     # When everything done, release the capture
+    cap.release()
+    cv2.destroyAllWindows()
+
+def camera_face_detect(token, exit_camera):
+    cap = cv2.VideoCapture(0)
+    
+    while True:
+        # Capture frame-by-frame
+        ret, frame = cap.read()
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        faces = faceCascade.detectMultiScale(
+            gray,
+            scaleFactor=1.1,
+            minNeighbors=5,
+            minSize=(30, 30),
+            flags=cv2.CASCADE_SCALE_IMAGE
+        )
+
+        # Say, if we detect a person, send results to the server
+        # halt the execution of the program 10 seconds and then 
+        # continue...
+
+        if exit_camera:
+            PEOPLE_ENTERING = -1 * len(result)
+        else:
+            PEOPLE_ENTERING = len(result) 
+        
+        if PEOPLE_ENTERING > 0:
+            print(GREEN + "Person detected!" + LIGHT_GRAY)
+            time.sleep(5)
+            res = auth.add_info(PEOPLE_ENTERING, STORE_PIN, token)
+           
+            cv2.imwrite("body_detected.png", frame)
+        
+            if res != "Can't add info":
+                print()
+                print(CYAN + "Info added to the DB succesfully!" + LIGHT_GRAY)
+                print(LIGHT_GRAY + """
+                    People entering: {}
+                    People inside: {}
+                    Timestamp: {}
+                """.format(res["info"]["peopleEntering"], res["info"]["peopleInside"], res["info"]["timestamp"])) 
+            else:
+                print(res)
+
+        # Draw a rectangle around the faces
+        for (x, y, w, h) in faces:
+            cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
+        # Display the resulting frame
+        cv2.imshow('Video', frame)
+        cv2.imwrite("face_detected.png", frame)
+        
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+    
     cap.release()
     cv2.destroyAllWindows()
 
@@ -157,7 +259,11 @@ def args_parser():
     ap.add_argument("-i", "--image", default=None,
                     help="path to image test file directory")
     ap.add_argument("-c", "--camera", default=False,
-                    help="Set as true if you wish to use the camera")
+                    help="Set as true if you wish to use the camera to detect bodies")
+    ap.add_argument("-f", "--face", default=False,
+                    help="Set as true if you wish to use the camera to detect faces")
+    ap.add_argument("-E", "--exit", default=False,
+                    help="Set as true if this is the exit camera")
     args = vars(ap.parse_args())
 
     return args
