@@ -71,7 +71,7 @@ def detect_people(args, token):
     image_path = args["image"]
     camera = True if str(args["camera"]) == 'true' else False
     face = True if str(args["face"]) == 'true' else False
-    EXIT = True if str(args["exit"]) == 'true' else False
+    exit = True if str(args["exit"]) == 'true' else False
 
     # Routine to read local image
     if image_path != None and not camera: 
@@ -79,35 +79,24 @@ def detect_people(args, token):
         (result, image) = local_detect(image_path)
         print(GREEN + "[INFO]" + LIGHT_GRAY + " sending results")
         
-        # Sends the result to the server
-        if EXIT:
+        # Sends the result to the server and prints the result
+        PEOPLE_ENTERING = len(result)
+
+        if exit:
             PEOPLE_ENTERING = -1 * len(result)
-        else:
-            PEOPLE_ENTERING = len(result)
             
-        res = auth.add_info(PEOPLE_ENTERING, STORE_PIN, token)
-    
-        if res != "Can't add info":
-            print()
-            print(CYAN + "Info added to the DB succesfully!" + LIGHT_GRAY)
-            print(LIGHT_GRAY + """
-                People entering: {}
-                People inside: {}
-                Timestamp: {}
-            """.format(res["info"]["peopleEntering"], res["info"]["peopleInside"], res["info"]["timestamp"])) 
-        else:
-            print(res)
+        add_and_print(PEOPLE_ENTERING, False, token)
 
         return
 
     # Routine to read images from webcam
     if camera:
         print(GREEN + "[INFO]" + LIGHT_GRAY + " Reading camera images. Detecting bodies")
-        camera_body_detect(token, EXIT)
+        camera_body_detect(token, exit)
     
     if face:
         print(GREEN + "[INFO]" + LIGHT_GRAY + " Reading camera images. Detecting faces.")
-        camera_face_detect(token, EXIT)
+        camera_face_detect(token, exit)
 
 
 def local_detect(image_path):
@@ -151,37 +140,23 @@ def camera_body_detect(token, exit_camera):
         # Capture frame-by-frame
         ret, frame = cap.read()
         frame = imutils.resize(frame, width=min(400, frame.shape[1]))
-        result = detector(frame.copy())
+        bodies = detector(frame.copy())
 
         # Say, if we detect a person, send results to the server
         # halt the execution of the program 10 seconds and then 
         # continue...
 
-        if exit_camera:
-            PEOPLE_ENTERING = -1 * len(result)
-        else:
-            PEOPLE_ENTERING = len(result) 
+        PEOPLE_ENTERING = len(bodies) 
         
         if PEOPLE_ENTERING > 0:
-            print(GREEN + "Person detected!" + LIGHT_GRAY)
-            time.sleep(5)
-            res = auth.add_info(PEOPLE_ENTERING, STORE_PIN, token)
-           
-            cv2.imwrite("body_detected.png", frame)
-        
-            if res != "Can't add info":
-                print()
-                print(CYAN + "Info added to the DB succesfully!" + LIGHT_GRAY)
-                print(LIGHT_GRAY + """
-                    People entering: {}
-                    People inside: {}
-                    Timestamp: {}
-                """.format(res["info"]["peopleEntering"], res["info"]["peopleInside"], res["info"]["timestamp"])) 
-            else:
-                print(res)
+
+            if exit_camera:
+                PEOPLE_ENTERING = -1 * len(bodies)
+
+            add_and_print(PEOPLE_ENTERING, True, token)
 
         # Draw a rectangle around the bodies
-        for (xA, yA, xB, yB) in result:
+        for (xA, yA, xB, yB) in bodies:
             cv2.rectangle(frame, (xA, yA), (xB, yB), (0, 255, 0), 2)
         # Show the resulting frame
         cv2.imshow('frame', frame)
@@ -220,21 +195,8 @@ def camera_face_detect(token, exit_camera):
             if exit_camera:
                 PEOPLE_ENTERING = -1 * len(faces)
 
-            print(GREEN + "Person detected!" + LIGHT_GRAY)
-            time.sleep(5)
-            res = auth.add_info(PEOPLE_ENTERING, STORE_PIN, token)
-
-            if res != "Can't add info":
-                print()
-                print(CYAN + "Info added to the DB succesfully!" + LIGHT_GRAY)
-                print(LIGHT_GRAY + """
-                    People entering: {}
-                    People inside: {}
-                    Timestamp: {}
-                """.format(res["info"]["peopleEntering"], res["info"]["peopleInside"], res["info"]["timestamp"])) 
-            else:
-                print(res)
-
+        add_and_print(PEOPLE_ENTERING, True, token)
+            
         # Draw a rectangle around the faces
         for (x, y, w, h) in faces:
             cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
@@ -266,6 +228,25 @@ def args_parser():
     args = vars(ap.parse_args())
 
     return args
+
+def add_and_print(people_entering, camera, token):
+    print(GREEN + "Person detected!" + LIGHT_GRAY)
+
+    if camera:
+        time.sleep(5)
+
+    res = auth.add_info(people_entering, STORE_PIN, token)
+
+    if res != "Can't add info":
+        print()
+        print(CYAN + "Info added to the DB succesfully!" + LIGHT_GRAY)
+        print(LIGHT_GRAY + """
+            People entering: {}
+            People inside: {}
+            Timestamp: {}
+        """.format(res["info"]["peopleEntering"], res["info"]["peopleInside"], res["info"]["timestamp"])) 
+    else:
+        print(res)
 
 def auth_user(pin):
     res = auth.signin(pin)
