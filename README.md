@@ -24,96 +24,15 @@ git clone REPO_URL
 cd cppl
 ```
 
-### Install the dependencies of the api
+## To use it execute one of this commands
 
 ```bash
-cd api
-npm install
+python src/main.py -i PATH_TO_IMAGE     # Reads and detects people in a single local stored image
+python src/main.py -c true              # Attempts to detect people using webcam
+python src/main.py -f true              # Attempts to detect faces using the webcam
 ```
+Additionally, you can add the -E flag to start the program in exit door mode
 
-### Run the API service in dev mode
-
-```bash
-npm run dev
-```
-
-## Usage
-
-To use the main module, simply do this:
-
-```bash
-cd cppl
-python src/main.py -i PATH_TO_IMAGE   
-python src/main.py -c true 
-```
-
-Consume the API using Postman or Arc
-
-### Auth routes
-<pre>
-/auth/?pin=""          [GET]                      Gets the info of a store  
-</pre>
-```json
-{
-    "x-access-token": "Token generated in signin"
-}
-```
-<pre>
-/auth/signup           [POST]                     Creates a new store in db  
-</pre>
-```json
-{
-    "storeName": "Alsuper Robinson",
-    "pin": "5431",
-    "storeCapacity": 50,
-    "peopleInside": 10,
-    "hash": "06d80eb0c50b49a509b49f2424e8c805"
-}
-```
-<pre>
-/auth/signin           [POST]                     Returns a JWT if valid pin is sent 
-</pre>
-```json
-{
-    "pin": "5431"
-}
-```
-<pre>
-/auth/new-pin          [POST]                     Changes the pin of a store 
-</pre>
-```json
-{
-    "pin": "5431",
-    "newPin": "5556"
-}
-```
-```json
-{
-    "x-access-token": "Token generated in signin"
-}
-```
-<pre>
-/auth/logout           [POST]                     Logs us off 
-</pre>
-
-### Info routes
-<pre>
-/info/                 [POST]                     Creates a new info log in the server
-</pre>
-```json
-{
-    "peopleEntering": 1,
-    "storePin": "5431"
-}
-```
-<pre>
-/info/?pin=""          [GET]                      Returns all the logs of a store 
-</pre>
-```json
-{
-    "x-access-token": "Token generated in signin"
-}
-```
 ## Contributing
 Just ask for permission.
 
