@@ -11,7 +11,7 @@ import base64
 # Our module to make requests to the server
 import auth 
 
-
+# TODO: Implement face mask detection
 
 '''
 Usage:
@@ -180,7 +180,7 @@ def camera_body_detect(token, exit_camera):
             else:
                 print(res)
 
-        # Draw a rectangle around the faces
+        # Draw a rectangle around the bodies
         for (xA, yA, xB, yB) in result:
             cv2.rectangle(frame, (xA, yA), (xB, yB), (0, 255, 0), 2)
         # Show the resulting frame
@@ -213,19 +213,17 @@ def camera_face_detect(token, exit_camera):
         # Say, if we detect a person, send results to the server
         # halt the execution of the program 10 seconds and then 
         # continue...
-
-        if exit_camera:
-            PEOPLE_ENTERING = -1 * len(result)
-        else:
-            PEOPLE_ENTERING = len(result) 
+       
+        PEOPLE_ENTERING = len(faces)
         
         if PEOPLE_ENTERING > 0:
+            if exit_camera:
+                PEOPLE_ENTERING = -1 * len(faces)
+
             print(GREEN + "Person detected!" + LIGHT_GRAY)
             time.sleep(5)
             res = auth.add_info(PEOPLE_ENTERING, STORE_PIN, token)
-           
-            cv2.imwrite("body_detected.png", frame)
-        
+
             if res != "Can't add info":
                 print()
                 print(CYAN + "Info added to the DB succesfully!" + LIGHT_GRAY)
@@ -242,7 +240,8 @@ def camera_face_detect(token, exit_camera):
             cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
         # Display the resulting frame
         cv2.imshow('Video', frame)
-        cv2.imwrite("face_detected.png", frame)
+        
+        #cv2.imwrite("face_detected.png", frame)
         
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
