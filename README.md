@@ -4,7 +4,7 @@ This is the foundation for the AI project.
 
 # Links to other repos
 
-* [Link to vue frontend](https://github.com/Jesus-Antonio-Martinez/Servercontavid)
+* [Link to frontend](https://github.com/Jesus-Antonio-Martinez/Appcontavid)
 * [Link to the backend api](https://github.com/DanielLimasP/ai-store-api)
 
 ### Some useful links
