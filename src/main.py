@@ -75,6 +75,11 @@ def detect_people(args, token):
     camera = True if str(args["camera"]) == 'true' else False
     face = True if str(args["face"]) == 'true' else False
     exit = True if str(args["exit"]) == 'true' else False
+    reset = True if str(args["reset"]) == 'true' else False
+
+    if reset:
+        reset_store_info()
+        return 
 
     # Routine to read local image
     if image_path != None and not camera: 
@@ -228,6 +233,8 @@ def args_parser():
                     help="Set as true if you wish to use the camera to detect faces")
     ap.add_argument("-E", "--exit", default=False,
                     help="Set as true if this is the exit camera")
+    ap.add_argument("-R", "--reset", default=False,
+                    help="Reset the info of the store")
     args = vars(ap.parse_args())
 
     return args
@@ -248,6 +255,13 @@ def add_and_print(people_entering, camera, token):
             People inside: {}
             Timestamp: {}
         """.format(res["info"]["peopleEntering"], res["info"]["peopleInside"], res["info"]["timestamp"])) 
+    else:
+        print(res)
+
+def reset_store_info():
+    res = auth.add_info(people_entering=0, store_pin=STORE_PIN)
+    if res != "Can't add info":
+        print(res["msg"])
     else:
         print(res)
 

@@ -30,6 +30,7 @@ cd cppl
 python src/main.py -i PATH_TO_IMAGE     # Reads and detects people in a single local stored image
 python src/main.py -c true              # Attempts to detect people using webcam
 python src/main.py -f true              # Attempts to detect faces using the webcam
+python src/main.py -R true              # Resets the info of a store
 ```
 Additionally, you can add the -E flag to start the program in exit door mode
 
