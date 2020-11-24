@@ -2,6 +2,11 @@
 
 This is the foundation for the AI project.
 
+# Links to other repos
+
+* [Link to vue frontend](https://github.com/Jesus-Antonio-Martinez/Servercontavid)
+* [Link to the backend api](https://github.com/DanielLimasP/ai-store-api)
+
 ### Some useful links
 
 * [Link to the tutorial](https://ubidots.com/blog/people-counting-with-opencv-python-and-ubidots/)
